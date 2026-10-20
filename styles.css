@@ -69,7 +69,7 @@ button { color: inherit; cursor: pointer; }
 .nav-icon { font-size: 18px; width: 19px; text-align: center; }
 .sidebar-theme { display: flex; justify-content: center; margin: auto 0 12px; }
 .sidebar-theme .icon-button { width: 34px; height: 34px; }
-.profile { display: flex; align-items: center; gap: 10px; padding: 13px 2px 0; border-top: 1px solid var(--border-soft); }
+.profile { display: flex; align-items: center; gap: 10px; margin-top: auto; padding: 13px 2px 0; border-top: 1px solid var(--border-soft); }
 .avatar { width: 34px; height: 34px; border: 0; border-radius: 50%; display: grid; place-items: center; color: #fff; background: #c58c69; font-weight: 700; font-size: 12px; }
 .profile-avatar { flex: 0 0 34px; padding: 0; transition: box-shadow .15s ease, transform .15s ease; }
 .profile-avatar:hover, .profile-avatar[aria-expanded="true"] { box-shadow: 0 0 0 3px var(--green-soft); transform: scale(1.04); }
@@ -221,41 +221,75 @@ h1 { margin: 0; font-family: "Playfair Display", serif; font-size: clamp(29px, 3
 @media (min-width: 1400px) { .days-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 1050px) { .sidebar { width: 205px; } .main-content { margin-left: 205px; padding-right: 30px; padding-left: 30px; } .recipe-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 700px) {
-  .sidebar { width: 64px; padding: 20px 9px; align-items: center; }
-  .brand { padding: 0; font-size: 0; }
-  .brand-mark { font-size: 21px; }
-  .sidebar-label, .nav-link:not(.active), .nav-link.active { font-size: 0; }
-  .sidebar-label { height: 20px; margin: 30px 0 8px; }
-  .main-nav { width: 100%; }
-  .nav-link { justify-content: center; padding: 0; font-size: 0 !important; }
-  .nav-icon { font-size: 18px; }
+  .sidebar {
+    inset: auto 0 0;
+    width: 100%;
+    height: calc(70px + env(safe-area-inset-bottom));
+    padding: 7px 12px calc(7px + env(safe-area-inset-bottom));
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    border-right: 0;
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -8px 24px #27352b0a;
+  }
+  .sidebar > .brand, .sidebar-label { display: none; }
+  .sidebar-theme { order: -1; flex: 0 0 44px; display: flex; justify-content: flex-start; margin: 0 8px 0 0; }
+  .main-nav { width: auto; flex: 1; display: flex; justify-content: space-around; gap: 4px; }
+  .nav-link {
+    height: 52px;
+    min-width: 0;
+    flex: 1;
+    flex-direction: column;
+    justify-content: center;
+    gap: 3px;
+    padding: 4px 3px;
+    font-size: 10px !important;
+    line-height: 1.2;
+    text-align: center;
+  }
+  .nav-icon { width: auto; font-size: 18px; line-height: 1; }
+  .sidebar-theme .icon-button { width: 42px; height: 42px; flex: 0 0 42px; }
+  .profile { margin: 0 0 0 4px; padding: 0; border: 0; }
   .profile-details { display: none !important; }
-  .profile-avatar { flex-basis: 34px; }
-  .sidebar-theme { margin-top: auto; margin-bottom: 12px; }
-  .profile { margin-top: 0; border: 0; }
-  .main-content { margin-left: 64px; padding: 0 17px 35px; }
-  .topbar { height: 58px; }
+  .profile-avatar { flex-basis: 38px; width: 38px; height: 38px; }
+  .main-content { margin-left: 0; padding: 0 20px calc(92px + env(safe-area-inset-bottom)); }
+  .topbar { height: 56px; }
   .topbar-right { display: none; }
-  .page-heading { align-items: start; gap: 12px; margin: 32px 0 21px; }
-  .page-heading .button { min-height: 34px; padding: 0 10px; font-size: 10px; }
-  h1 { font-size: 27px; }
-  .page-subtitle { font-size: 10px; line-height: 1.5; }
-  .week-overview { align-items: start; padding: 14px; }
-  .overview-icon { width: 35px; height: 35px; }
-  .overview-stats { gap: 8px; }
-  .overview-stats div span { font-size: 8px; }
-  .progress-track { display: none; }
-  .week-toolbar { margin-top: 26px; }
-  .days-grid { grid-template-columns: 1fr; }
-  .recipe-toolbar { align-items: start; flex-direction: column; }
-  .recipe-grid { grid-template-columns: 1fr; }
-  .recipe-card { min-height: 155px; }
+  .page-heading { align-items: start; gap: 15px; margin: 28px 0 24px; }
+  .page-heading > div:first-child { min-width: 0; }
+  .page-heading .button { min-height: 42px; padding: 0 14px; font-size: 12px; }
+  h1 { font-size: clamp(28px, 8vw, 34px); line-height: 1.12; }
+  .eyebrow { font-size: 8px; letter-spacing: 1.1px; line-height: 1.5; }
+  .page-subtitle { margin-top: 8px; font-size: 12px; line-height: 1.5; }
+  .week-toolbar { margin: 30px 0 14px; }
+  .week-toolbar h2 { font-size: 20px; }
+  .week-toolbar p { font-size: 11px; }
+  .days-grid { grid-template-columns: 1fr; gap: 10px; }
+  .day-card { padding: 16px; }
+  .day-title strong { font-size: 13px; }
+  .day-date, .meal-time { font-size: 11px; }
+  .meal-name { font-size: 12px; }
+  .meal-category { font-size: 10px; }
+  .recipe-toolbar { align-items: stretch; flex-direction: column; gap: 12px; margin-top: 0; }
+  .category-tabs { flex-wrap: nowrap; overflow-x: auto; margin: 0 -20px; padding: 2px 20px 8px; scrollbar-width: none; }
+  .category-tabs::-webkit-scrollbar { display: none; }
+  .category-tab { flex: 0 0 auto; padding: 9px 13px; font-size: 11px; }
+  .recipe-toolbar > .button { align-self: flex-start; }
+  .page-heading-actions { align-items: stretch; flex-direction: row; flex-wrap: wrap; }
+  .recipe-grid { grid-template-columns: 1fr; gap: 10px; }
+  .recipe-card { min-height: 145px; padding: 18px; }
+  .recipe-card h3 { font-size: 17px; }
+  .recipe-card p { font-size: 11px; }
+  .toast { right: 16px; bottom: calc(84px + env(safe-area-inset-bottom)); left: 16px; text-align: center; }
 }
 @media (max-width: 390px) {
-  .main-content { padding-right: 12px; padding-left: 12px; }
-  .page-heading { flex-direction: column; align-items: start; }
+  .main-content { padding-right: 16px; padding-left: 16px; }
+  .page-heading { flex-direction: column; align-items: stretch; }
+  .page-heading > .button, .page-heading-actions .button { width: 100%; }
   .overview-caption { max-width: 135px; line-height: 1.4; }
   .overview-stats { gap: 7px; }
   .week-controls { gap: 4px; }
   .week-controls .button { padding: 0 8px; }
+  .category-tabs { margin-right: -16px; margin-left: -16px; padding-right: 16px; padding-left: 16px; }
 }

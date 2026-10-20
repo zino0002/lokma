@@ -702,7 +702,7 @@ const THEME_KEY = "lokma-theme";
 const themeToggle = document.querySelector(".theme-toggle");
 function applyTheme(theme) {
   document.documentElement.dataset.theme = theme;
-  themeToggle.textContent = theme === "dark" ? "☀" : "☾";
+  themeToggle.textContent = theme === "dark" ? "☀ Açık temaya geç" : "☾ Koyu temaya geç";
   themeToggle.setAttribute("aria-label", theme === "dark" ? "Açık moda geç" : "Koyu moda geç");
   themeToggle.title = theme === "dark" ? "Açık moda geç" : "Koyu moda geç";
   document.querySelector('meta[name="theme-color"]').content = theme === "dark" ? "#202720" : "#f7f8f3";
