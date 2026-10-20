@@ -51,12 +51,7 @@ button { color: inherit; cursor: pointer; }
 .nav-link { height: 45px; padding: 0 12px; display: flex; align-items: center; gap: 12px; border: 0; border-radius: 9px; background: transparent; color: var(--text-soft); text-align: left; font-size: 13px; font-weight: 600; }
 .nav-link.active { background: var(--green-soft); color: var(--green); }
 .nav-icon { font-size: 18px; width: 19px; text-align: center; }
-.sidebar-note { position: relative; overflow: hidden; margin: auto 2px 22px; min-height: 127px; padding: 16px; border-radius: 12px; background: #f7f3eb; color: #626858; }
-.note-icon { color: var(--orange); font-size: 20px; }
-.sidebar-note p { margin: 8px 0 0; font-size: 12px; line-height: 1.7; }
-.sidebar-note strong { color: var(--green); }
-.note-squiggle { position: absolute; right: 13px; bottom: 0; color: #d7cbb6; font-size: 38px; }
-.sidebar-theme { display: flex; justify-content: center; margin: 0 0 12px; }
+.sidebar-theme { display: flex; justify-content: center; margin: auto 0 12px; }
 .sidebar-theme .icon-button { width: 34px; height: 34px; }
 .profile { display: flex; align-items: center; gap: 10px; padding: 13px 2px 0; border-top: 1px solid var(--border-soft); }
 .avatar { width: 34px; height: 34px; border: 0; border-radius: 50%; display: grid; place-items: center; color: #fff; background: #c58c69; font-weight: 700; font-size: 12px; }
@@ -131,11 +126,12 @@ h1 { margin: 0; font-family: "Playfair Display", serif; font-size: clamp(29px, 3
 .category-tabs { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; }
 .category-tab { padding: 8px 12px; border: 1px solid transparent; border-radius: 7px; background: transparent; color: var(--text-soft); font-size: 10px; }
 .category-tab.active { border-color: #e1e8de; background: #edf3ea; color: var(--green); font-weight: 700; }
-.category-tab .category-delete { padding-left: 7px; color: #aab2a7; font-size: 13px; }
+.page-heading-actions { display: flex; flex-direction: column; align-items: end; gap: 8px; }
+.category-delete-button { color: #9b5c50; }
+.category-delete-button:hover { border-color: #c99c92; background: #faf1ef; }
 .recipe-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
 .recipe-card { display: flex; min-height: 171px; flex-direction: column; padding: 17px; border: 1px solid var(--border); border-radius: 11px; background: var(--surface); }
 .recipe-card-top { display: flex; align-items: center; justify-content: space-between; }
-.recipe-emoji { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 10px; background: var(--surface-muted); font-size: 17px; }
 .recipe-category { color: #91a08d; font-size: 9px; }
 .recipe-card h3 { margin: 15px 0 6px; font-family: "Playfair Display", serif; font-size: 15px; font-weight: 600; }
 .recipe-card p { display: -webkit-box; overflow: hidden; margin: 0; color: #929990; font-size: 10px; line-height: 1.6; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
@@ -166,7 +162,6 @@ h1 { margin: 0; font-family: "Playfair Display", serif; font-size: clamp(29px, 3
 .detail-section p { margin: 0; }
 .toast { position: fixed; z-index: 5; right: 25px; bottom: 24px; padding: 12px 17px; border-radius: 9px; background: #294b32; color: white; font-size: 11px; opacity: 0; pointer-events: none; transform: translateY(8px); transition: .2s ease; }
 .toast.visible { opacity: 1; transform: translateY(0); }
-:root[data-theme="dark"] .sidebar-note { background: #34342f; color: #d2d5c9; }
 :root[data-theme="dark"] .brand-mark { color: #203020; }
 :root[data-theme="dark"] .sidebar-label,
 :root[data-theme="dark"] .breadcrumb,
@@ -180,7 +175,6 @@ h1 { margin: 0; font-family: "Playfair Display", serif; font-size: clamp(29px, 3
 :root[data-theme="dark"] .optional { color: var(--text-subtle); }
 :root[data-theme="dark"] .crumb-slash,
 :root[data-theme="dark"] .profile-more,
-:root[data-theme="dark"] .category-tab .category-delete,
 :root[data-theme="dark"] .recipe-card-bottom .delete-recipe-card { color: #a0aba0; }
 :root[data-theme="dark"] .day-card.today { border-color: #718b6b; box-shadow: 0 0 0 2px #303c30; }
 :root[data-theme="dark"] .today-label,
@@ -188,6 +182,8 @@ h1 { margin: 0; font-family: "Playfair Display", serif; font-size: clamp(29px, 3
 :root[data-theme="dark"] .category-tab.active { border-style: solid; }
 :root[data-theme="dark"] .category-tab:not(.active):hover { background: var(--surface-muted); }
 :root[data-theme="dark"] .button-outline { border-color: var(--border); color: var(--text-soft); }
+:root[data-theme="dark"] .category-delete-button { color: #e0a69a; }
+:root[data-theme="dark"] .category-delete-button:hover { border-color: #9b6258; background: #3a302e; }
 :root[data-theme="dark"] .button-primary { color: #1f2b20; }
 :root[data-theme="dark"] .field-label,
 :root[data-theme="dark"] .detail-section h3,
@@ -209,7 +205,7 @@ h1 { margin: 0; font-family: "Playfair Display", serif; font-size: clamp(29px, 3
   .main-nav { width: 100%; }
   .nav-link { justify-content: center; padding: 0; font-size: 0 !important; }
   .nav-icon { font-size: 18px; }
-  .sidebar-note, .profile div:nth-child(2), .profile-more { display: none; }
+  .profile div:nth-child(2), .profile-more { display: none; }
   .sidebar-theme { margin-top: auto; margin-bottom: 12px; }
   .profile { margin-top: 0; border: 0; }
   .main-content { margin-left: 64px; padding: 0 17px 35px; }

@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
+
   </head>
   <body>
     <div class="app-shell">
@@ -22,11 +23,6 @@
           <button class="nav-link active" data-view="week"><span class="nav-icon">▦</span>Haftalık plan</button>
           <button class="nav-link" data-view="recipes"><span class="nav-icon">♡</span>Yemeklerim</button>
         </nav>
-        <div class="sidebar-note">
-          <span class="note-icon">✳</span>
-          <p>Bugün ne pişirsem<br /><strong>derdi yok.</strong></p>
-          <span class="note-squiggle">〜</span>
-        </div>
         <div class="sidebar-theme">
           <button class="icon-button theme-toggle" id="theme-toggle" type="button" aria-label="Koyu moda geç" title="Koyu moda geç">☾</button>
         </div>
@@ -66,7 +62,10 @@
               <h1>Yemeklerim<span class="heading-period">.</span></h1>
               <p class="page-subtitle">Favori tariflerini düzenle, kendi koleksiyonunu oluştur.</p>
             </div>
-            <button class="button button-primary" id="add-recipe"><span>＋</span> Tarif ekle</button>
+            <div class="page-heading-actions">
+              <button class="button button-outline category-delete-button hidden" id="delete-category" type="button">Bölümü kaldır</button>
+              <button class="button button-primary" id="add-recipe"><span>＋</span> Tarif ekle</button>
+            </div>
           </div>
           <div class="recipe-toolbar">
             <div class="category-tabs" id="category-tabs"></div>
@@ -81,7 +80,7 @@
       <form id="recipe-form" class="modal-card">
         <div class="modal-heading"><div><p class="eyebrow" id="recipe-modal-eyebrow">MUTFAK DEFTERİNE</p><h2 id="recipe-modal-title">Yeni tarif</h2></div><button class="icon-button close-dialog" type="button" aria-label="Kapat">×</button></div>
         <div id="plan-fields" class="plan-fields hidden">
-          <label class="field-label" for="plan-recipe">Hangi tarifi planlayalım?</label>
+          <label class="field-label" for="plan-recipe">Yemeklerimden seç</label>
           <select class="text-input" id="plan-recipe"></select>
           <label class="field-label" for="meal-time">Hangi saatte?</label>
           <input class="text-input" id="meal-time" name="time" type="time" value="18:30" />

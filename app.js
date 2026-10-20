@@ -1,6 +1,5 @@
 const STORAGE_KEY = "lokma-kitchen-v1";
 const DAY_NAMES = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
-const EMOJIS = ["🍲", "🥗", "🍝", "🍰", "🥘", "🧁"];
 
 const initialState = () => {
   const recipes = [
@@ -153,41 +152,42 @@ function renderCategories() {
   const categories = state.categories;
   if (!categories.some((category) => category.id === activeCategory)) activeCategory = "all";
   elements.categoryTabs.innerHTML = `<button class="category-tab${activeCategory === "all" ? " active" : ""}" data-category="all">Tümü</button>${categories.map((category) =>
-    `<button class="category-tab${activeCategory === category.id ? " active" : ""}" data-category="${escapeHtml(category.id)}">${escapeHtml(category.name)}<span class="category-delete" data-delete-category="${escapeHtml(category.id)}" aria-label="${escapeHtml(category.name)} bölümünü sil" title="Bölümü sil">×</span></button>`
+    `<button class="category-tab${activeCategory === category.id ? " active" : ""}" data-category="${escapeHtml(category.id)}">${escapeHtml(category.name)}</button>`
   ).join("")}`;
-  elements.categoryTabs.querySelectorAll("[data-category]").forEach((button) => button.addEventListener("click", (event) => {
-    if (event.target.closest("[data-delete-category]")) return;
+  elements.categoryTabs.querySelectorAll("[data-category]").forEach((button) => button.addEventListener("click", () => {
     activeCategory = button.dataset.category;
     renderRecipes();
   }));
-  elements.categoryTabs.querySelectorAll("[data-delete-category]").forEach((button) => button.addEventListener("click", (event) => {
-    event.stopPropagation();
-    const category = getCategory(button.dataset.deleteCategory);
-    if (!category) return;
-    const recipeCount = state.recipes.filter((recipe) => recipe.categoryId === category.id).length;
-    const message = recipeCount
-      ? `"${category.name}" bölümünü silmek, içindeki ${recipeCount} tarifi ve haftalık planlardaki yemeklerini de siler. Devam edilsin mi?`
-      : `"${category.name}" bölümü silinsin mi?`;
-    if (!window.confirm(message)) return;
-    const removedRecipes = new Set(state.recipes.filter((recipe) => recipe.categoryId === category.id).map((recipe) => recipe.id));
-    state.categories = state.categories.filter((item) => item.id !== category.id);
-    state.recipes = state.recipes.filter((recipe) => recipe.categoryId !== category.id);
-    state.meals = state.meals.filter((meal) => !removedRecipes.has(meal.recipeId));
-    activeCategory = "all";
-    saveState();
-    renderAll();
-    showToast("Bölüm silindi.");
-  }));
+}
+
+function deleteCategory(id) {
+  const category = getCategory(id);
+  if (!category) return;
+  const recipeIds = new Set(state.recipes.filter((recipe) => recipe.categoryId === category.id).map((recipe) => recipe.id));
+  const linkedMeals = state.meals.filter((meal) => recipeIds.has(meal.recipeId)).length;
+  const message = recipeIds.size
+    ? `"${category.name}" bölümünü silmek, içindeki ${recipeIds.size} tarifi${linkedMeals ? ` ve haftalık plandaki ${linkedMeals} öğünü` : ""} de siler. Devam edilsin mi?`
+    : `"${category.name}" bölümü silinsin mi?`;
+  if (!window.confirm(message)) return;
+  state.categories = state.categories.filter((item) => item.id !== category.id);
+  state.recipes = state.recipes.filter((recipe) => !recipeIds.has(recipe.id));
+  state.meals = state.meals.filter((meal) => !recipeIds.has(meal.recipeId));
+  activeCategory = "all";
+  saveState();
+  renderAll();
+  showToast("Bölüm silindi.");
 }
 
 function renderRecipes() {
   renderCategories();
   const recipes = state.recipes.filter((recipe) => activeCategory === "all" || recipe.categoryId === activeCategory);
-  elements.recipeGrid.innerHTML = recipes.length ? recipes.map((recipe, index) => {
+  const selectedCategory = getCategory(activeCategory);
+  document.querySelector("#delete-category").classList.toggle("hidden", !selectedCategory);
+  elements.recipeGrid.innerHTML = recipes.length ? recipes.map((recipe) => {
     const category = getCategory(recipe.categoryId);
     const description = recipe.ingredients ? recipe.ingredients.split("\n").slice(0, 2).join(" · ") : "Tarif detaylarını eklemek için incele.";
     return `<article class="recipe-card">
-      <div class="recipe-card-top"><span class="recipe-emoji">${EMOJIS[index % EMOJIS.length]}</span><span class="recipe-category">${escapeHtml(category?.name || "Tarif")}</span></div>
+      <div class="recipe-card-top"><span class="recipe-category">${escapeHtml(category?.name || "Tarif")}</span></div>
       <h3>${escapeHtml(recipe.name)}</h3><p>${escapeHtml(description)}</p>
       <div class="recipe-card-bottom"><button data-detail-recipe="${escapeHtml(recipe.id)}">Tarifi görüntüle <span>→</span></button><button class="delete-recipe-card" data-delete-recipe="${escapeHtml(recipe.id)}" aria-label="${escapeHtml(recipe.name)} tarifini sil">×</button></div>
     </article>`;
@@ -229,11 +229,21 @@ function openRecipeForm({ day = null, recipeId = null } = {}) {
   elements.recipeForm.dataset.recipeId = recipeId || "";
   document.querySelector("#plan-fields").classList.toggle("hidden", day === null);
   const planRecipe = document.querySelector("#plan-recipe");
-  planRecipe.innerHTML = `<option value="__new__">＋ Yeni tarif oluştur</option>${state.recipes.map((item) => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.name)}</option>`).join("")}`;
-  planRecipe.value = "__new__";
-  document.querySelector("#recipe-fields").classList.remove("hidden");
-  document.querySelector("#recipe-name").required = true;
-  document.querySelector("#recipe-category").required = true;
+  const recipeGroups = state.categories.map((category) => {
+    const recipes = state.recipes.filter((item) => item.categoryId === category.id);
+    return recipes.length
+      ? `<optgroup label="${escapeHtml(category.name)}">${recipes.map((item) => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.name)}</option>`).join("")}</optgroup>`
+      : "";
+  }).join("");
+  const ungroupedRecipes = state.recipes.filter((item) => !getCategory(item.categoryId));
+  planRecipe.innerHTML = state.recipes.length
+    ? `${recipeGroups}${ungroupedRecipes.length ? `<optgroup label="Diğer">${ungroupedRecipes.map((item) => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.name)}</option>`).join("")}</optgroup>` : ""}<option value="__new__">＋ Yeni tarif oluştur</option>`
+    : `<option value="__new__">Henüz tarifin yok — yeni tarif oluştur</option>`;
+  const selectExistingRecipe = day !== null && state.recipes.length > 0;
+  planRecipe.value = selectExistingRecipe ? state.recipes[0].id : "__new__";
+  document.querySelector("#recipe-fields").classList.toggle("hidden", day !== null && selectExistingRecipe);
+  document.querySelector("#recipe-name").required = day === null || !selectExistingRecipe;
+  document.querySelector("#recipe-category").required = day === null || !selectExistingRecipe;
   document.querySelector("#recipe-modal-eyebrow").textContent = day !== null ? "HAFTALIK PLANINA" : recipe ? "TARİFİNİ DÜZENLE" : "MUTFAK DEFTERİNE";
   document.querySelector("#recipe-modal-title").textContent = day !== null ? `${DAY_NAMES[day]} için yemek planla` : recipe ? "Tarifi düzenle" : "Yeni tarif";
   document.querySelector("#recipe-submit").textContent = day !== null ? "Planına ekle" : recipe ? "Değişiklikleri kaydet" : "Tarifi kaydet";
@@ -327,6 +337,9 @@ document.querySelector("#add-recipe").addEventListener("click", () => openRecipe
 document.querySelector("#add-category").addEventListener("click", () => {
   elements.categoryForm.reset();
   elements.categoryDialog.showModal();
+});
+document.querySelector("#delete-category").addEventListener("click", () => {
+  if (activeCategory !== "all") deleteCategory(activeCategory);
 });
 elements.categoryForm.addEventListener("submit", (event) => {
   event.preventDefault();
