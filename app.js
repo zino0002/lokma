@@ -1,4 +1,9 @@
 const STORAGE_KEY = "lokma-kitchen-v1";
+const SUPABASE_URL = "https://yvgwydbcvgkfmkvnpvgq.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_oXWBZjJxAtzBtE36TUnUwA_cwjAYnX1";
+const CLOUD_TABLE = "user_kitchens";
+const AUTH_CACHE_PREFIX = "lokma-kitchen-cache:";
+const PENDING_SYNC_PREFIX = "lokma-kitchen-pending:";
 const DAY_NAMES = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
 
 const initialState = () => {
@@ -73,11 +78,18 @@ function loadState() {
   }
 }
 
-let state = loadState();
+const hasLegacyData = localStorage.getItem(STORAGE_KEY) !== null;
+let legacyState = hasLegacyData ? loadState() : null;
+let state = initialState();
 let activeCategory = "all";
 let activeView = "week";
 let recipeForDetails = null;
 let toastTimer;
+let supabaseClient = null;
+let activeUserId = null;
+let loadingUserId = null;
+let authGeneration = 0;
+let saveQueue = Promise.resolve();
 
 const elements = {
   daysGrid: document.querySelector("#days-grid"),
@@ -92,7 +104,22 @@ const elements = {
 };
 
 function saveState() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  if (!activeUserId || !supabaseClient) return;
+  const userId = activeUserId;
+  const snapshot = JSON.parse(JSON.stringify(state));
+  localStorage.setItem(`${AUTH_CACHE_PREFIX}${userId}`, JSON.stringify(snapshot));
+  localStorage.setItem(`${PENDING_SYNC_PREFIX}${userId}`, "true");
+  saveQueue = saveQueue.catch(() => {}).then(async () => {
+    if (activeUserId !== userId) return;
+    const { error } = await supabaseClient
+      .from(CLOUD_TABLE)
+      .upsert({ user_id: userId, data: snapshot, updated_at: new Date().toISOString() }, { onConflict: "user_id" });
+    if (error) throw error;
+    localStorage.removeItem(`${PENDING_SYNC_PREFIX}${userId}`);
+  }).catch((error) => {
+    console.error("Mutfak verisi Supabase'e kaydedilemedi.", error);
+    showToast("Buluta kaydedilemedi. Bağlantını ve Supabase tablo/RLS kurulumunu kontrol et.");
+  });
 }
 
 function showToast(message) {
@@ -371,6 +398,306 @@ document.querySelectorAll("dialog").forEach((dialog) => dialog.addEventListener(
   if (event.target === dialog) dialog.close();
 }));
 
+const authScreen = document.querySelector("#auth-screen");
+const appShell = document.querySelector("#app-shell");
+const accountDisabledScreen = document.querySelector("#account-disabled-screen");
+const authForm = document.querySelector("#auth-form");
+const authMessage = document.querySelector("#auth-message");
+const accountDialog = document.querySelector("#account-dialog");
+const passwordDialog = document.querySelector("#password-dialog");
+let authMode = "signin";
+
+function setAccountScreen(screen) {
+  authScreen.classList.toggle("hidden", screen !== "auth");
+  appShell.classList.toggle("hidden", screen !== "app");
+  accountDisabledScreen.classList.toggle("hidden", screen !== "disabled");
+}
+
+function updateAccountStatusUI(isActive) {
+  document.querySelector("#account-status").textContent = isActive
+    ? "Hesabın açık. Tariflerin ve haftalık planın hesabında saklanıyor."
+    : "Hesabın kapalı. Açana kadar tariflerine ve haftalık planına erişemezsin.";
+  document.querySelector("#toggle-account-status").textContent = isActive
+    ? "Hesabı geçici olarak kapat"
+    : "Hesabı yeniden aç";
+}
+
+function setAuthMessage(message, type = "error") {
+  authMessage.textContent = message;
+  authMessage.classList.toggle("success", type === "success");
+  authMessage.classList.toggle("error", type === "error");
+}
+
+function setAuthMode(mode) {
+  authMode = mode;
+  const isSignUp = mode === "signup";
+  document.querySelector("#auth-title").innerHTML = isSignUp ? 'Mutfağını oluştur<span class="heading-period">.</span>' : 'Hoş geldin<span class="heading-period">.</span>';
+  document.querySelector("#auth-description").textContent = isSignUp
+    ? "E-posta ve parolanla hesabını oluştur; tariflerin sana özel saklansın."
+    : "Tariflerini ve haftalık planını hesabında güvenle sakla.";
+  document.querySelector("#auth-submit").textContent = isSignUp ? "Hesap oluştur" : "Giriş yap";
+  document.querySelector("#auth-password").autocomplete = isSignUp ? "new-password" : "current-password";
+  document.querySelectorAll("[data-auth-mode]").forEach((button) => button.classList.toggle("active", button.dataset.authMode === mode));
+  setAuthMessage("");
+}
+
+function validKitchenData(data) {
+  return data && Array.isArray(data.categories) && Array.isArray(data.recipes) && Array.isArray(data.meals);
+}
+
+function cacheKey(userId) {
+  return `${AUTH_CACHE_PREFIX}${userId}`;
+}
+
+async function upsertKitchen(userId, kitchen) {
+  const { error } = await supabaseClient
+    .from(CLOUD_TABLE)
+    .upsert({ user_id: userId, data: kitchen, updated_at: new Date().toISOString() }, { onConflict: "user_id" });
+  if (error) throw error;
+  localStorage.removeItem(`${PENDING_SYNC_PREFIX}${userId}`);
+}
+
+async function activateSession(session) {
+  const userId = session.user.id;
+  if (activeUserId === userId || loadingUserId === userId) return;
+  const generation = ++authGeneration;
+  loadingUserId = userId;
+  activeUserId = null;
+  setAccountScreen("auth");
+  authScreen.classList.add("loading");
+  setAuthMessage("Mutfağın yükleniyor…", "success");
+
+  let accountStatusVerified = false;
+  try {
+    const { data: accountStatus, error: statusError } = await supabaseClient
+      .from("user_account_status")
+      .select("is_active")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (statusError) throw statusError;
+    if (!accountStatus) throw new Error("Hesap durumu tablosu bulunamadı. Yeni schema.sql dosyasını Supabase SQL Editor'de çalıştır.");
+    accountStatusVerified = true;
+    if (generation !== authGeneration) return;
+    document.querySelector("#profile-email").textContent = session.user.email || "Hesabım";
+    document.querySelector("#account-email").textContent = session.user.email || "Hesabım";
+    updateAccountStatusUI(accountStatus.is_active);
+    if (!accountStatus.is_active) {
+      activeUserId = userId;
+      document.querySelector("#account-disabled-message").textContent = "";
+      setAccountScreen("disabled");
+      return;
+    }
+
+    const { data, error } = await supabaseClient
+      .from(CLOUD_TABLE)
+      .select("data")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (error) throw error;
+    if (generation !== authGeneration) return;
+
+    const cachedValue = localStorage.getItem(cacheKey(userId));
+    const cachedKitchen = cachedValue ? JSON.parse(cachedValue) : null;
+    const hasPendingSync = localStorage.getItem(`${PENDING_SYNC_PREFIX}${userId}`) === "true";
+
+    if (data) {
+      if (!validKitchenData(data.data)) throw new Error("Hesabındaki mutfak verisinin biçimi geçersiz.");
+      state = hasPendingSync && validKitchenData(cachedKitchen) ? cachedKitchen : data.data;
+      activeUserId = userId;
+      if (hasPendingSync && validKitchenData(cachedKitchen)) saveState();
+      localStorage.removeItem(STORAGE_KEY);
+      legacyState = null;
+    } else {
+      const shouldImport = legacyState && window.confirm("Bu cihazda önceden kaydedilmiş tarifler bulundu. Bu verileri yeni hesabına aktarmak ister misin?");
+      state = shouldImport ? legacyState : initialState();
+      await upsertKitchen(userId, state);
+      activeUserId = userId;
+      localStorage.removeItem(STORAGE_KEY);
+      legacyState = null;
+    }
+
+    if (generation !== authGeneration) return;
+    localStorage.setItem(cacheKey(userId), JSON.stringify(state));
+    renderAll();
+    setAccountScreen("app");
+  } catch (error) {
+    console.error("Kullanıcı mutfağı yüklenemedi.", error);
+    if (generation === authGeneration) {
+      const cachedValue = localStorage.getItem(cacheKey(userId));
+      let cachedKitchen = null;
+      try {
+        cachedKitchen = cachedValue ? JSON.parse(cachedValue) : null;
+      } catch (cacheError) {
+        console.error("Yerel mutfak önbelleği okunamadı.", cacheError);
+      }
+      if (accountStatusVerified && validKitchenData(cachedKitchen)) {
+        state = cachedKitchen;
+        activeUserId = userId;
+        document.querySelector("#profile-email").textContent = session.user.email || "Hesabım";
+        document.querySelector("#account-email").textContent = session.user.email || "Hesabım";
+        renderAll();
+        setAccountScreen("app");
+        showToast("Çevrimdışı önbellek açıldı; bulut bağlantısı kurulunca yeniden eşitlenecek.");
+      } else {
+        setAuthMessage(`Mutfak verisi yüklenemedi: ${error.message} Supabase SQL kurulumunu kontrol et.`);
+      }
+    }
+  } finally {
+    if (loadingUserId === userId) loadingUserId = null;
+    authScreen.classList.remove("loading");
+  }
+}
+
+document.querySelectorAll("[data-auth-mode]").forEach((button) => {
+  button.addEventListener("click", () => setAuthMode(button.dataset.authMode));
+});
+
+authForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (!supabaseClient) {
+    setAuthMessage("Supabase bağlantısı başlatılamadı. İnternet bağlantını kontrol edip sayfayı yenile.");
+    return;
+  }
+  const submitButton = document.querySelector("#auth-submit");
+  const form = new FormData(authForm);
+  const email = String(form.get("email")).trim();
+  const password = String(form.get("password"));
+  submitButton.disabled = true;
+  setAuthMessage(authMode === "signup" ? "Hesabın oluşturuluyor…" : "Giriş yapılıyor…", "success");
+  try {
+    if (authMode === "signup") {
+      const { data, error } = await supabaseClient.auth.signUp({ email, password });
+      if (error) throw error;
+      if (!data.session) {
+        setAuthMessage("Hesabın oluşturuldu. E-postana gönderilen doğrulama bağlantısına tıklayıp giriş yapabilirsin.", "success");
+      }
+    } else {
+      const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+    }
+  } catch (error) {
+    console.error("Supabase hesap işlemi başarısız oldu.", error);
+    setAuthMessage(error.message || "İşlem tamamlanamadı. Bilgilerini kontrol edip tekrar dene.");
+  } finally {
+    submitButton.disabled = false;
+  }
+});
+
+async function signOut() {
+  await saveQueue;
+  try {
+    const { error } = await supabaseClient.auth.signOut();
+    if (error) throw error;
+  } catch (error) {
+    console.error("Oturum kapatılamadı.", error);
+    showToast(`Oturum kapatılamadı: ${error.message}`);
+  }
+}
+
+document.querySelector("#open-account").addEventListener("click", () => {
+  document.querySelector("#open-account").setAttribute("aria-expanded", "true");
+  accountDialog.showModal();
+});
+accountDialog.addEventListener("close", () => {
+  document.querySelector("#open-account").setAttribute("aria-expanded", "false");
+});
+document.querySelector("#sign-out").addEventListener("click", signOut);
+document.querySelector("#disabled-sign-out").addEventListener("click", signOut);
+
+document.querySelector("#open-password-dialog").addEventListener("click", () => {
+  accountDialog.close();
+  document.querySelector("#password-form").reset();
+  document.querySelector("#password-message").textContent = "";
+  passwordDialog.showModal();
+});
+document.querySelector("#password-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const password = document.querySelector("#new-password").value;
+  const confirmation = document.querySelector("#confirm-password").value;
+  const message = document.querySelector("#password-message");
+  if (password !== confirmation) {
+    message.textContent = "Parolalar birbiriyle eşleşmiyor.";
+    return;
+  }
+  const submit = event.currentTarget.querySelector('[type="submit"]');
+  submit.disabled = true;
+  message.textContent = "Parola güncelleniyor…";
+  message.classList.add("success");
+  try {
+    const { error } = await supabaseClient.auth.updateUser({ password });
+    if (error) throw error;
+    passwordDialog.close();
+    accountDialog.showModal();
+    showToast("Parolan güncellendi.");
+  } catch (error) {
+    console.error("Parola güncellenemedi.", error);
+    message.classList.remove("success");
+    message.textContent = `Parola güncellenemedi: ${error.message}`;
+  } finally {
+    submit.disabled = false;
+  }
+});
+
+async function setAccountActive(isActive) {
+  if (!activeUserId) return;
+  const result = await supabaseClient.rpc("set_my_account_active", { p_is_active: isActive });
+  if (result.error) throw result.error;
+  if (result.data !== true) throw new Error("Hesap durumu değiştirilemedi. Supabase schema.sql dosyasını yeniden çalıştır.");
+}
+
+document.querySelector("#toggle-account-status").addEventListener("click", async () => {
+  const button = document.querySelector("#toggle-account-status");
+  button.disabled = true;
+  try {
+    await saveQueue;
+    const isActive = button.textContent.trim() === "Hesabı yeniden aç";
+    if (!isActive && !window.confirm("Hesabını geçici olarak kapatmak istiyor musun? Tariflerine erişimi hesabını yeniden açana kadar durduracağız.")) return;
+    await setAccountActive(isActive);
+    updateAccountStatusUI(isActive);
+    if (isActive) {
+      const { data, error } = await supabaseClient.auth.getSession();
+      if (error) throw error;
+      if (!data.session) throw new Error("Oturum bulunamadı. Yeniden giriş yap.");
+      activeUserId = null;
+      accountDialog.close();
+      await activateSession(data.session);
+    } else {
+      accountDialog.close();
+      document.querySelector("#account-disabled-message").textContent = "Hesabın kapatıldı. Tariflerin güvende ve hesabını istediğin zaman yeniden açabilirsin.";
+      setAccountScreen("disabled");
+    }
+  } catch (error) {
+    console.error("Hesap geçici olarak kapatılamadı.", error);
+    showToast(`Hesap kapatılamadı: ${error.message}`);
+  } finally {
+    button.disabled = false;
+  }
+});
+
+document.querySelector("#reactivate-account").addEventListener("click", async (event) => {
+  const button = event.currentTarget;
+  button.disabled = true;
+  document.querySelector("#account-disabled-message").textContent = "Hesabın yeniden açılıyor…";
+  try {
+    await setAccountActive(true);
+    updateAccountStatusUI(true);
+    const { data, error } = await supabaseClient.auth.getSession();
+    if (error) throw error;
+    if (!data.session) throw new Error("Oturum bulunamadı. Yeniden giriş yap.");
+    activeUserId = null;
+    await activateSession(data.session);
+  } catch (error) {
+    console.error("Hesap yeniden açılamadı.", error);
+    document.querySelector("#account-disabled-message").textContent = `Hesap açılamadı: ${error.message}`;
+  } finally {
+    button.disabled = false;
+  }
+});
+
+window.addEventListener("online", () => {
+  if (activeUserId && localStorage.getItem(`${PENDING_SYNC_PREFIX}${activeUserId}`) === "true") saveState();
+});
+
 const THEME_KEY = "lokma-theme";
 const themeToggle = document.querySelector(".theme-toggle");
 function applyTheme(theme) {
@@ -387,4 +714,35 @@ themeToggle.addEventListener("click", () => {
   applyTheme(theme);
 });
 
-renderAll();
+document.querySelector("#profile-email").textContent = "Ev aşçısı";
+if (!window.supabase?.createClient) {
+  setAuthMessage("Supabase bağlantı kitaplığı yüklenemedi. İnternet bağlantını kontrol edip sayfayı yenile.");
+} else {
+  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+  });
+  supabaseClient.auth.onAuthStateChange((_event, session) => {
+    if (session) {
+      window.setTimeout(() => void activateSession(session), 0);
+    } else {
+      authGeneration += 1;
+      activeUserId = null;
+      loadingUserId = null;
+      accountDialog.close();
+      passwordDialog.close();
+      setAccountScreen("auth");
+      authForm.reset();
+      setAuthMode("signin");
+    }
+  });
+  supabaseClient.auth.getSession().then(({ data, error }) => {
+    if (error) {
+      setAuthMessage(`Oturum bilgisi alınamadı: ${error.message}`);
+    } else if (data.session) {
+      void activateSession(data.session);
+    }
+  }).catch((error) => {
+    console.error("Supabase oturumu denetlenemedi.", error);
+    setAuthMessage("Supabase oturumu kontrol edilemedi. İnternet bağlantını kontrol edip tekrar dene.");
+  });
+}

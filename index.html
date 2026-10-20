@@ -5,14 +5,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#f7f8f3" />
     <title>Lokma — Haftalık yemek planın</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
-
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   </head>
   <body>
-    <div class="app-shell">
+    <main class="auth-screen" id="auth-screen">
+      <a class="brand auth-brand" href="#" aria-label="Lokma ana sayfa">
+        <span class="brand-mark">l</span>
+        <span>lokma<span class="brand-dot">.</span></span>
+      </a>
+      <form id="auth-form" class="auth-card">
+        <p class="eyebrow">MUTFAĞIN SENİNLE HER YERDE</p>
+        <h1 id="auth-title">Hoş geldin<span class="heading-period">.</span></h1>
+        <p class="auth-description" id="auth-description">Tariflerini ve haftalık planını hesabında güvenle sakla.</p>
+        <div class="auth-mode-switch">
+          <button type="button" class="auth-mode active" data-auth-mode="signin">Giriş yap</button>
+          <button type="button" class="auth-mode" data-auth-mode="signup">Hesap oluştur</button>
+        </div>
+        <label class="field-label" for="auth-email">E-posta</label>
+        <input class="text-input" id="auth-email" name="email" type="email" placeholder="ornek@eposta.com" autocomplete="email" required />
+        <label class="field-label" for="auth-password">Parola</label>
+        <input class="text-input" id="auth-password" name="password" type="password" placeholder="En az 8 karakter" autocomplete="current-password" minlength="8" required />
+        <p class="auth-message" id="auth-message" role="status" aria-live="polite"></p>
+        <button class="button button-primary auth-submit" id="auth-submit" type="submit">Giriş yap</button>
+        <p class="auth-footnote">Hesabındaki tarifler yalnızca sana özeldir.</p>
+      </form>
+    </main>
+
+    <div class="app-shell hidden" id="app-shell">
       <aside class="sidebar">
         <a class="brand" href="#" aria-label="Lokma ana sayfa">
           <span class="brand-mark">l</span>
@@ -27,9 +51,8 @@
           <button class="icon-button theme-toggle" id="theme-toggle" type="button" aria-label="Koyu moda geç" title="Koyu moda geç">☾</button>
         </div>
         <div class="profile">
-          <div class="avatar">G</div>
-          <div><strong>Benim mutfağım</strong><span>Ev aşçısı</span></div>
-          <span class="profile-more">···</span>
+          <button class="avatar profile-avatar" id="open-account" type="button" aria-label="Hesap ayarlarını aç">G</button>
+          <div class="profile-details"><strong>Benim mutfağım</strong><span id="profile-email">Ev aşçısı</span></div>
         </div>
       </aside>
 
@@ -116,6 +139,42 @@
         <div class="modal-actions"><button class="button button-outline" id="delete-recipe" type="button">Tarifi sil</button><button class="button button-quiet" id="edit-recipe" type="button">Düzenle</button><button class="button button-primary close-dialog" type="button">Tamam</button></div>
       </div>
     </dialog>
+    <dialog id="account-dialog" class="modal">
+      <section class="modal-card account-card">
+        <div class="modal-heading"><div><p class="eyebrow">HESAP AYARLARI</p><h2>Hesabım</h2></div><button class="icon-button close-dialog" type="button" aria-label="Kapat">×</button></div>
+        <div class="account-identity"><span class="avatar">G</span><div><strong>Benim mutfağım</strong><span id="account-email"></span></div></div>
+        <div class="account-status" id="account-status"></div>
+        <div class="account-actions">
+          <button class="button button-outline" id="open-password-dialog" type="button">Parolayı değiştir</button>
+          <button class="button button-outline" id="toggle-account-status" type="button">Hesabı geçici olarak kapat</button>
+          <button class="button button-quiet" id="sign-out" type="button">Oturumu kapat</button>
+        </div>
+      </section>
+    </dialog>
+    <dialog id="password-dialog" class="modal">
+      <form id="password-form" class="modal-card modal-compact">
+        <div class="modal-heading"><div><p class="eyebrow">HESAP GÜVENLİĞİ</p><h2>Parolayı değiştir</h2></div><button class="icon-button close-dialog" type="button" aria-label="Kapat">×</button></div>
+        <label class="field-label" for="new-password">Yeni parola</label>
+        <input class="text-input" id="new-password" type="password" minlength="8" autocomplete="new-password" required />
+        <label class="field-label" for="confirm-password">Yeni parola (tekrar)</label>
+        <input class="text-input" id="confirm-password" type="password" minlength="8" autocomplete="new-password" required />
+        <p class="auth-message" id="password-message" role="status" aria-live="polite"></p>
+        <div class="modal-actions"><button class="button button-quiet close-dialog" type="button">Vazgeç</button><button class="button button-primary" type="submit">Parolayı güncelle</button></div>
+      </form>
+    </dialog>
+    <main class="auth-screen hidden" id="account-disabled-screen">
+      <a class="brand auth-brand" href="#" aria-label="Lokma ana sayfa">
+        <span class="brand-mark">l</span><span>lokma<span class="brand-dot">.</span></span>
+      </a>
+      <section class="auth-card">
+        <p class="eyebrow">HESAP DURUMU</p>
+        <h1>Mutfağın geçici olarak kapalı<span class="heading-period">.</span></h1>
+        <p class="auth-description">Tariflerine erişmek için hesabını yeniden açabilirsin.</p>
+        <p class="auth-message" id="account-disabled-message" role="status" aria-live="polite"></p>
+        <button class="button button-primary auth-submit" id="reactivate-account" type="button">Hesabı yeniden aç</button>
+        <button class="button button-quiet auth-submit" id="disabled-sign-out" type="button">Oturumu kapat</button>
+      </section>
+    </main>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
     <script src="app.js"></script>
   </body>

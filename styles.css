@@ -42,6 +42,22 @@ body { margin: 0; background: var(--cream); color: var(--ink); min-width: 320px;
 button, input, select, textarea { font: inherit; }
 button { color: inherit; cursor: pointer; }
 .app-shell { min-height: 100vh; }
+.auth-screen { min-height: 100vh; display: grid; place-items: center; align-content: center; gap: 28px; padding: 30px 18px; }
+.auth-screen.hidden, .app-shell.hidden { display: none; }
+.auth-brand { padding: 0; }
+.auth-card { width: min(100%, 420px); padding: 32px; border: 1px solid var(--border); border-radius: 15px; background: var(--surface); box-shadow: 0 12px 40px #27352b0b; }
+.auth-card h1 { font-size: 30px; }
+.auth-description { margin: 8px 0 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
+.auth-mode-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin: 23px 0 20px; padding: 4px; border-radius: 8px; background: var(--surface-muted); }
+.auth-mode { min-height: 34px; border: 0; border-radius: 6px; background: transparent; color: var(--text-soft); font-size: 11px; font-weight: 600; }
+.auth-mode.active { background: var(--surface); color: var(--green); box-shadow: 0 1px 4px #27352b12; }
+.auth-submit { width: 100%; margin-top: 12px; }
+.auth-submit:disabled { cursor: wait; opacity: .65; }
+.auth-message { min-height: 16px; margin: 12px 0 0; color: #a04b40; font-size: 10px; line-height: 1.6; }
+.auth-message.success { color: var(--green); }
+.auth-message:empty { min-height: 0; margin: 0; }
+.auth-footnote { margin: 18px 0 0; color: var(--text-subtle); font-size: 10px; text-align: center; }
+.auth-screen.loading .auth-card { opacity: .7; pointer-events: none; }
 .sidebar { width: 242px; background: var(--surface); border-right: 1px solid var(--border); position: fixed; inset: 0 auto 0 0; display: flex; flex-direction: column; padding: 29px 19px 18px; z-index: 2; }
 .brand { display: flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; font-family: "Playfair Display", serif; font-weight: 700; font-size: 26px; letter-spacing: -.8px; padding: 0 10px; }
 .brand-mark { display: grid; place-items: center; width: 31px; height: 31px; color: white; background: var(--green); border-radius: 10px 10px 10px 3px; font-family: "Playfair Display", serif; font-size: 21px; }
@@ -55,10 +71,18 @@ button { color: inherit; cursor: pointer; }
 .sidebar-theme .icon-button { width: 34px; height: 34px; }
 .profile { display: flex; align-items: center; gap: 10px; padding: 13px 2px 0; border-top: 1px solid var(--border-soft); }
 .avatar { width: 34px; height: 34px; border: 0; border-radius: 50%; display: grid; place-items: center; color: #fff; background: #c58c69; font-weight: 700; font-size: 12px; }
-.profile div:nth-child(2) { display: grid; gap: 3px; }
+.profile-avatar { flex: 0 0 34px; padding: 0; transition: box-shadow .15s ease, transform .15s ease; }
+.profile-avatar:hover, .profile-avatar[aria-expanded="true"] { box-shadow: 0 0 0 3px var(--green-soft); transform: scale(1.04); }
+.profile div:nth-child(2) { display: grid; min-width: 0; gap: 3px; }
 .profile strong { font-size: 11px; }
-.profile div span { color: var(--muted); font-size: 10px; }
-.profile-more { margin-left: auto; color: #9aa197; }
+.profile div span { overflow: hidden; color: var(--muted); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.account-identity { display: flex; align-items: center; gap: 12px; padding: 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-soft); }
+.account-identity div { display: grid; gap: 4px; }
+.account-identity strong { font-size: 12px; }
+.account-identity div span { color: var(--muted); font-size: 10px; overflow-wrap: anywhere; }
+.account-status { margin-top: 12px; color: var(--text-subtle); font-size: 10px; }
+.account-actions { display: grid; gap: 9px; margin-top: 18px; }
+.account-actions .button { width: 100%; justify-content: flex-start; }
 .main-content { max-width: 1560px; margin-left: 242px; padding: 0 52px 60px; }
 .topbar { height: 70px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
 .breadcrumb { display: flex; gap: 10px; color: #8b938a; font-size: 11px; }
@@ -174,7 +198,6 @@ h1 { margin: 0; font-family: "Playfair Display", serif; font-size: clamp(29px, 3
 :root[data-theme="dark"] .empty-recipes,
 :root[data-theme="dark"] .optional { color: var(--text-subtle); }
 :root[data-theme="dark"] .crumb-slash,
-:root[data-theme="dark"] .profile-more,
 :root[data-theme="dark"] .recipe-card-bottom .delete-recipe-card { color: #a0aba0; }
 :root[data-theme="dark"] .day-card.today { border-color: #718b6b; box-shadow: 0 0 0 2px #303c30; }
 :root[data-theme="dark"] .today-label,
@@ -184,6 +207,7 @@ h1 { margin: 0; font-family: "Playfair Display", serif; font-size: clamp(29px, 3
 :root[data-theme="dark"] .button-outline { border-color: var(--border); color: var(--text-soft); }
 :root[data-theme="dark"] .category-delete-button { color: #e0a69a; }
 :root[data-theme="dark"] .category-delete-button:hover { border-color: #9b6258; background: #3a302e; }
+:root[data-theme="dark"] .account-identity { background: var(--surface-soft); }
 :root[data-theme="dark"] .button-primary { color: #1f2b20; }
 :root[data-theme="dark"] .field-label,
 :root[data-theme="dark"] .detail-section h3,
@@ -205,7 +229,8 @@ h1 { margin: 0; font-family: "Playfair Display", serif; font-size: clamp(29px, 3
   .main-nav { width: 100%; }
   .nav-link { justify-content: center; padding: 0; font-size: 0 !important; }
   .nav-icon { font-size: 18px; }
-  .profile div:nth-child(2), .profile-more { display: none; }
+  .profile-details { display: none !important; }
+  .profile-avatar { flex-basis: 34px; }
   .sidebar-theme { margin-top: auto; margin-bottom: 12px; }
   .profile { margin-top: 0; border: 0; }
   .main-content { margin-left: 64px; padding: 0 17px 35px; }
