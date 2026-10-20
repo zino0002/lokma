@@ -1,0 +1,18 @@
+{
+  "id": "./",
+  "name": "Lokma — Haftalık yemek planın",
+  "short_name": "Lokma",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f7f8f3",
+  "theme_color": "#f7f8f3",
+  "icons": [
+    {
+      "src": "./favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
