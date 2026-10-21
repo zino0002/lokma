@@ -174,7 +174,7 @@ h1 { margin: 0; font-family: "Playfair Display", serif; font-size: clamp(29px, 3
 .modal-heading .icon-button { width: 30px; height: 30px; font-size: 18px; }
 .field-label { display: block; margin: 15px 0 7px; color: #5c685b; font-size: 10px; font-weight: 700; }
 .optional { color: #a0a79e; font-weight: 400; }
-.text-input { width: 100%; min-height: 39px; padding: 10px 11px; border: 1px solid var(--border); border-radius: 7px; outline: none; background: var(--surface); color: var(--ink); font-size: 11px; }
+.text-input { width: 100%; min-height: 39px; padding: 10px 11px; border: 1px solid var(--border); border-radius: 7px; outline: none; background: var(--surface); color: var(--ink); font-size: 16px; }
 .text-input:focus { border-color: #91aa88; box-shadow: 0 0 0 3px #edf3ea; }
 .text-input::placeholder { color: #b0b6ae; }
 .text-area { min-height: 70px; resize: vertical; }
