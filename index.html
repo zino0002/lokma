@@ -2,7 +2,7 @@
 <html lang="tr">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
     <meta name="theme-color" content="#f7f8f3" />
     <title>Lokma — Haftalık yemek planın</title>
     <link rel="icon" type="image/png" sizes="512x512" href="./assets/icons/apple-touch-icon.png?v=3" />
@@ -71,7 +71,16 @@
           </div>
 
           <div class="week-toolbar">
-            <div><h2>Gün gün menün</h2><p>Bu plan her hafta tekrar eder.</p></div>
+            <div><h2>Gün gün menün</h2><p id="week-caption">Haftanı planla, yaptıkların kaydedilsin.</p></div>
+            <div class="history-controls" aria-label="Hafta geçmişi">
+              <button class="icon-button" id="previous-week" type="button" aria-label="Önceki hafta">‹</button>
+              <div class="week-date-stack">
+                <button id="current-week-shortcut" class="current-week-shortcut" type="button">Bu haftaya geri gel</button>
+                <button id="week-date-button" class="week-date-button" type="button" aria-label="Tarih seç">19 Eki 2026 – 25 Eki 2026⌄</button>
+                <input id="week-picker" type="date" tabindex="-1" aria-label="Tarih seç" />
+              </div>
+              <button class="icon-button" id="next-week" type="button" aria-label="Sonraki hafta">›</button>
+            </div>
           </div>
           <div class="days-grid" id="days-grid"></div>
         </section>

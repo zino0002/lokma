@@ -34,6 +34,15 @@ function startOfWeek(date) {
   result.setDate(result.getDate() - day);
   return result;
 }
+function dateKey(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+function weekKey(date) { return dateKey(startOfWeek(date)); }
+function dateForWeekDay(weekStart, dayOfWeek) {
+  const date = new Date(weekStart);
+  date.setDate(date.getDate() + dayOfWeek);
+  return date;
+}
 function makeId(prefix) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
@@ -83,6 +92,7 @@ let legacyState = hasLegacyData ? loadState() : null;
 let state = initialState();
 let activeCategory = "all";
 let activeView = "week";
+let viewedWeekKey = weekKey(new Date());
 let recipeForDetails = null;
 let toastTimer;
 let supabaseClient = null;
@@ -122,6 +132,69 @@ function saveState() {
   });
 }
 
+function getWeekHistory() {
+  if (!state.weekHistory || typeof state.weekHistory !== "object" || Array.isArray(state.weekHistory)) state.weekHistory = {};
+  return state.weekHistory;
+}
+
+function makeWeekRecord(key, startDate, sourceMeals = state.meals) {
+  const monday = new Date(`${key}T00:00:00`);
+  const meals = sourceMeals.filter((meal) => dateKey(dateForWeekDay(monday, meal.dayOfWeek)) >= startDate).map((meal) => {
+    const recipe = getRecipe(meal.recipeId);
+    const category = recipe && getCategory(recipe.categoryId);
+    return {
+      id: meal.id,
+      recipeId: meal.recipeId,
+      recipeName: recipe?.name || "Silinmiş tarif",
+      categoryName: category?.name || "Tarif",
+      dayOfWeek: meal.dayOfWeek,
+      time: meal.time,
+      completed: Boolean(meal.completed)
+    };
+  });
+  return { weekStart: key, startDate, updatedAt: new Date().toISOString(), meals };
+}
+
+function ensureCurrentWeekRecord() {
+  const key = weekKey(new Date());
+  const history = getWeekHistory();
+  if (!history[key]) {
+    const startDate = dateKey(new Date());
+    if (!state.historyStartDate) state.historyStartDate = startDate;
+    state.meals = state.meals.map((meal) => ({ ...meal, completed: false }));
+    history[key] = makeWeekRecord(key, startDate);
+    history[key].status = "current";
+  } else if (history[key].status === "planned") {
+    history[key].meals = history[key].meals.map((meal) => ({ ...meal, completed: false }));
+    history[key].status = "current";
+  } else if (!history[key].status) {
+    history[key].status = "current";
+  }
+}
+
+function getOrCreateWeekRecord(key) {
+  const history = getWeekHistory();
+  if (history[key]) return history[key];
+  const isFuture = key > weekKey(new Date());
+  const meals = isFuture ? state.meals.map((meal) => ({ ...meal, completed: false })) : [];
+  const record = makeWeekRecord(key, key, meals);
+  record.status = isFuture ? "planned" : "past";
+  history[key] = record;
+  return record;
+}
+
+function addMealToWeek(key, meal) {
+  const record = getOrCreateWeekRecord(key);
+  const recipe = getRecipe(meal.recipeId);
+  const category = recipe && getCategory(recipe.categoryId);
+  record.meals.push({
+    ...meal,
+    recipeName: recipe?.name || "Silinmiş tarif",
+    categoryName: category?.name || "Tarif"
+  });
+  if (key === weekKey(new Date())) state.meals.push(meal);
+}
+
 function showToast(message) {
   elements.toast.textContent = message;
   elements.toast.classList.add("visible");
@@ -137,10 +210,28 @@ function getCategory(id) {
 }
 
 function renderWeek() {
+  const currentKey = weekKey(new Date());
+  const isCurrentWeek = viewedWeekKey === currentKey;
+  const history = getWeekHistory();
+  const record = history[viewedWeekKey];
+  const monday = new Date(`${viewedWeekKey}T00:00:00`);
+  const sunday = dateForWeekDay(monday, 6);
+  const dateFormatter = new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "short", year: "numeric" });
+  document.querySelector("#week-date-button").textContent = `${dateFormatter.format(monday)} – ${dateFormatter.format(sunday)}  ▾`;
+  document.querySelector("#week-picker").value = dateKey(monday);
+  document.querySelector("#current-week-shortcut").classList.toggle("is-current", isCurrentWeek);
+  const isFutureWeek = viewedWeekKey > currentKey;
+  document.querySelector("#week-caption").textContent = isCurrentWeek
+    ? "Bu haftanın planı ve tamamlanan yemekleri kaydediliyor."
+    : record?.status === "planned" ? "Gelecek hafta planı · düzenleyebilirsin."
+      : record ? "Bu haftanın kaydı · günleri düzenleyebilirsin."
+        : isFutureWeek ? "Gelecek hafta için yemek planı oluşturabilirsin."
+          : "Bu haftaya ait henüz kayıt yok; plan ekleyebilirsin.";
+  const recordedMeals = record?.meals || [];
   const todayIndex = (new Date().getDay() + 6) % 7;
   elements.daysGrid.innerHTML = DAY_NAMES.map((dayName, index) => {
-    const meals = state.meals.filter((meal) => meal.dayOfWeek === index).sort((a, b) => a.time.localeCompare(b.time));
-    const isToday = index === todayIndex;
+    const meals = recordedMeals.filter((meal) => meal.dayOfWeek === index).sort((a, b) => a.time.localeCompare(b.time));
+    const isToday = isCurrentWeek && index === todayIndex;
     return `<article class="day-card${isToday ? " today" : ""}">
       <div class="day-heading">
         <div class="day-title"><strong>${dayName}</strong>${isToday ? '<span class="today-label">BUGÜN</span>' : ""}</div>
@@ -148,11 +239,12 @@ function renderWeek() {
       </div>
       ${meals.length ? `<div class="meal-list">${meals.map((meal) => {
         const recipe = getRecipe(meal.recipeId);
-        const category = recipe && getCategory(recipe.categoryId);
-        if (!recipe) return "";
+        const recipeName = meal.recipeName || recipe?.name;
+        const categoryName = meal.categoryName || (recipe && getCategory(recipe.categoryId)?.name) || "Tarif";
+        if (!recipeName) return "";
         return `<div class="meal-item${meal.completed ? " completed" : ""}">
-          <input class="meal-check" type="checkbox" data-toggle-meal="${meal.id}" ${meal.completed ? "checked" : ""} aria-label="${escapeHtml(recipe.name)} tamamlandı" />
-          <div class="meal-info"><span class="meal-name">${escapeHtml(recipe.name)}</span><span class="meal-category">${escapeHtml(category?.name || "Tarif")}</span></div>
+          <input class="meal-check" type="checkbox" data-toggle-meal="${meal.id}" ${meal.completed ? "checked" : ""} aria-label="${escapeHtml(recipeName)} tamamlandı" />
+          <div class="meal-info"><span class="meal-name">${escapeHtml(recipeName)}</span><span class="meal-category">${escapeHtml(categoryName)}</span></div>
           <span class="meal-time">${escapeHtml(meal.time)}</span>
           <button class="remove-meal" data-remove-meal="${meal.id}" aria-label="Yemek planından çıkar">×</button>
         </div>`;
@@ -161,14 +253,21 @@ function renderWeek() {
   }).join("");
   elements.daysGrid.querySelectorAll("[data-add-day]").forEach((button) => button.addEventListener("click", () => openRecipeForm({ day: Number(button.dataset.addDay) })));
   elements.daysGrid.querySelectorAll("[data-toggle-meal]").forEach((checkbox) => checkbox.addEventListener("change", () => {
-    const meal = state.meals.find((item) => item.id === checkbox.dataset.toggleMeal);
+    const selectedRecord = getOrCreateWeekRecord(viewedWeekKey);
+    const meal = selectedRecord.meals.find((item) => item.id === checkbox.dataset.toggleMeal);
     if (!meal) return;
     meal.completed = checkbox.checked;
+    if (viewedWeekKey === weekKey(new Date())) {
+      const templateMeal = state.meals.find((item) => item.id === meal.id);
+      if (templateMeal) templateMeal.completed = checkbox.checked;
+    }
     saveState();
     renderWeek();
   }));
   elements.daysGrid.querySelectorAll("[data-remove-meal]").forEach((button) => button.addEventListener("click", () => {
-    state.meals = state.meals.filter((meal) => meal.id !== button.dataset.removeMeal);
+    const selectedRecord = getOrCreateWeekRecord(viewedWeekKey);
+    selectedRecord.meals = selectedRecord.meals.filter((meal) => meal.id !== button.dataset.removeMeal);
+    if (viewedWeekKey === weekKey(new Date())) state.meals = state.meals.filter((meal) => meal.id !== button.dataset.removeMeal);
     saveState();
     renderWeek();
     showToast("Yemek haftalık plandan çıkarıldı.");
@@ -291,7 +390,7 @@ elements.recipeForm.addEventListener("submit", (event) => {
   const day = elements.recipeForm.dataset.planDay;
   const selectedRecipeId = document.querySelector("#plan-recipe").value;
   if (day !== "" && selectedRecipeId !== "__new__") {
-    state.meals.push({ id: makeId("meal"), recipeId: selectedRecipeId, dayOfWeek: Number(day), time: String(form.get("time") || "18:30"), completed: false });
+    addMealToWeek(viewedWeekKey, { id: makeId("meal"), recipeId: selectedRecipeId, dayOfWeek: Number(day), time: String(form.get("time") || "18:30"), completed: false });
     saveState();
     elements.recipeDialog.close();
     renderAll();
@@ -317,7 +416,7 @@ elements.recipeForm.addEventListener("submit", (event) => {
     };
     state.recipes.push(recipe);
   }
-  if (day !== "") state.meals.push({ id: makeId("meal"), recipeId: recipe.id, dayOfWeek: Number(day), time: String(form.get("time") || "18:30"), completed: false });
+  if (day !== "") addMealToWeek(viewedWeekKey, { id: makeId("meal"), recipeId: recipe.id, dayOfWeek: Number(day), time: String(form.get("time") || "18:30"), completed: false });
   saveState();
   elements.recipeDialog.close();
   renderAll();
@@ -357,8 +456,36 @@ function deleteRecipe(id) {
 }
 
 document.querySelectorAll("[data-view]").forEach((button) => button.addEventListener("click", () => setView(button.dataset.view)));
+document.querySelector("#previous-week").addEventListener("click", () => {
+  const date = new Date(`${viewedWeekKey}T00:00:00`);
+  date.setDate(date.getDate() - 7);
+  viewedWeekKey = dateKey(date);
+  renderWeek();
+});
+document.querySelector("#week-date-button").addEventListener("click", () => {
+  const picker = document.querySelector("#week-picker");
+  if (typeof picker.showPicker === "function") picker.showPicker();
+  else { picker.focus(); picker.click(); }
+});
+document.querySelector("#current-week-shortcut").addEventListener("click", () => {
+  viewedWeekKey = weekKey(new Date());
+  renderWeek();
+});
+document.querySelector("#week-picker").addEventListener("change", (event) => {
+  const selectedDate = new Date(`${event.currentTarget.value}T00:00:00`);
+  if (Number.isNaN(selectedDate.getTime())) return;
+  viewedWeekKey = weekKey(selectedDate);
+  renderWeek();
+});
+document.querySelector("#next-week").addEventListener("click", () => {
+  const date = new Date(`${viewedWeekKey}T00:00:00`);
+  date.setDate(date.getDate() + 7);
+  viewedWeekKey = dateKey(date);
+  renderWeek();
+});
 document.querySelector("#add-week-meal").addEventListener("click", () => {
-  openRecipeForm({ day: (new Date().getDay() + 6) % 7 });
+  const day = viewedWeekKey === weekKey(new Date()) ? (new Date().getDay() + 6) % 7 : 0;
+  openRecipeForm({ day });
 });
 document.querySelector("#add-recipe").addEventListener("click", () => openRecipeForm());
 document.querySelector("#add-category").addEventListener("click", () => {
@@ -517,7 +644,9 @@ async function activateSession(session) {
     }
 
     if (generation !== authGeneration) return;
+    ensureCurrentWeekRecord();
     localStorage.setItem(cacheKey(userId), JSON.stringify(state));
+    saveState();
     renderAll();
     setAccountScreen("app");
   } catch (error) {
@@ -533,6 +662,8 @@ async function activateSession(session) {
       if (accountStatusVerified && validKitchenData(cachedKitchen)) {
         state = cachedKitchen;
         activeUserId = userId;
+        ensureCurrentWeekRecord();
+        localStorage.setItem(cacheKey(userId), JSON.stringify(state));
         document.querySelector("#profile-email").textContent = session.user.email || "Hesabım";
         document.querySelector("#account-email").textContent = session.user.email || "Hesabım";
         renderAll();

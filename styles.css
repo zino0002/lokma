@@ -1,4 +1,5 @@
 :root {
+  -webkit-text-size-adjust: 100%;
   color-scheme: light;
   --ink: #27352b;
   --muted: #899187;
@@ -83,7 +84,7 @@ button { color: inherit; cursor: pointer; }
 .account-status { margin-top: 12px; color: var(--text-subtle); font-size: 10px; }
 .account-actions { display: grid; gap: 9px; margin-top: 18px; }
 .account-actions .button { width: 100%; justify-content: flex-start; }
-.main-content { max-width: 1560px; margin-left: 242px; padding: 0 52px 60px; }
+.main-content { width: calc(100% - 242px); min-width: 0; max-width: 1560px; margin-left: 242px; padding: 0 52px 60px; container-type: inline-size; }
 .topbar { height: 70px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
 .breadcrumb { display: flex; gap: 10px; color: #8b938a; font-size: 11px; }
 .breadcrumb strong { color: var(--ink); font-weight: 600; }
@@ -92,7 +93,7 @@ button { color: inherit; cursor: pointer; }
 .today-chip { color: #798479; font-size: 11px; }
 .status-dot { display: inline-block; width: 7px; height: 7px; margin-right: 5px; border-radius: 50%; background: #83aa72; }
 .avatar.small { width: 29px; height: 29px; }
-.view { max-width: 1150px; margin: 0 auto; }
+.view { width: 100%; min-width: 0; max-width: 1150px; margin: 0 auto; }
 .hidden { display: none !important; }
 .page-heading { display: flex; justify-content: space-between; align-items: end; margin: 43px 0 27px; }
 .eyebrow { margin: 0 0 9px; color: #879284; font-size: 9px; font-weight: 700; letter-spacing: 1.35px; }
@@ -122,12 +123,24 @@ h1 { margin: 0; font-family: "Playfair Display", serif; font-size: clamp(29px, 3
 .week-toolbar { display: flex; align-items: end; justify-content: space-between; margin: 35px 0 16px; }
 .week-toolbar h2 { margin: 0 0 5px; font-family: "Playfair Display", serif; font-size: 18px; font-weight: 600; }
 .week-toolbar p { margin: 0; color: #929990; font-size: 10px; }
+.history-controls { display: grid; grid-template-columns: 40px 240px 40px; grid-template-rows: 16px 40px; align-items: center; justify-items: center; column-gap: 10px; }
+.history-controls #previous-week { grid-column: 1; grid-row: 2; }
+.history-controls #next-week { grid-column: 3; grid-row: 2; }
+.week-date-stack { position: relative; display: grid; grid-column: 2; grid-row: 1 / span 2; width: 240px; grid-template-rows: 16px 36px; justify-items: center; gap: 2px; }
+.week-date-button { width: 240px; height: 36px; padding: 0 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text-soft); font: inherit; font-size: 11px; white-space: nowrap; }
+.week-date-button:hover { border-color: #a9b8a4; background: var(--surface-soft); }
+.week-date-stack input { position: absolute; top: 18px; left: 50%; width: 2px; height: 2px; padding: 0; border: 0; opacity: .01; }
+.current-week-shortcut { align-self: center; border: 0; padding: 0; background: transparent; color: var(--green); cursor: pointer; font: inherit; font-size: 10px; font-weight: 600; text-decoration: underline; white-space: nowrap; }
+.current-week-shortcut:hover { color: var(--green-dark); }
+.current-week-shortcut.is-current { visibility: hidden; pointer-events: none; }
+.history-controls .icon-button { width: 40px; height: 40px; }
+.history-controls .icon-button:disabled { cursor: default; opacity: .4; }
 .week-controls { display: flex; align-items: center; gap: 7px; }
 .icon-button { width: 34px; height: 34px; border: 1px solid var(--border); border-radius: 8px; display: inline-grid; place-items: center; background: var(--surface); color: var(--text-soft); font-size: 20px; }
 .icon-button:hover { background: var(--surface-muted); }
 .week-controls .button { min-height: 34px; font-size: 10px; }
-.days-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.day-card { padding: 17px 18px 13px; border: 1px solid var(--border); border-radius: 11px; background: var(--surface); min-height: 125px; }
+.days-grid { display: grid; width: 100%; min-width: 0; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.day-card { min-width: 0; padding: 17px 18px 13px; border: 1px solid var(--border); border-radius: 11px; background: var(--surface); min-height: 125px; }
 .day-card.today { border-color: #c8d6c3; box-shadow: 0 0 0 2px #edf3ea; }
 .day-heading { display: flex; align-items: center; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--border-soft); }
 .day-title { display: flex; align-items: center; gap: 8px; }
@@ -174,7 +187,8 @@ h1 { margin: 0; font-family: "Playfair Display", serif; font-size: clamp(29px, 3
 .modal-heading .icon-button { width: 30px; height: 30px; font-size: 18px; }
 .field-label { display: block; margin: 15px 0 7px; color: #5c685b; font-size: 10px; font-weight: 700; }
 .optional { color: #a0a79e; font-weight: 400; }
-.text-input { width: 100%; min-height: 39px; padding: 10px 11px; border: 1px solid var(--border); border-radius: 7px; outline: none; background: var(--surface); color: var(--ink); font-size: 16px; }
+.text-input { width: 100%; min-height: 42px; padding: 10px 11px; border: 1px solid var(--border); border-radius: 7px; outline: none; background: var(--surface); color: var(--ink); font-size: 18px; }
+input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]), textarea, select { font-size: 18px; }
 .text-input:focus { border-color: #91aa88; box-shadow: 0 0 0 3px #edf3ea; }
 .text-input::placeholder { color: #b0b6ae; }
 .text-area { min-height: 70px; resize: vertical; }
@@ -218,8 +232,12 @@ h1 { margin: 0; font-family: "Playfair Display", serif; font-size: clamp(29px, 3
 :root[data-theme="dark"] .text-input:focus { border-color: #91aa88; box-shadow: 0 0 0 3px #374337; }
 :root[data-theme="dark"] .text-input::placeholder { color: #899587; }
 :root[data-theme="dark"] .empty-recipes { border-color: var(--border); }
-@media (min-width: 1400px) { .days-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-@media (max-width: 1050px) { .sidebar { width: 205px; } .main-content { margin-left: 205px; padding-right: 30px; padding-left: 30px; } .recipe-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 1050px) { .sidebar { width: 205px; } .main-content { width: calc(100% - 205px); margin-left: 205px; padding-right: 30px; padding-left: 30px; } .recipe-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@container (max-width: 900px) {
+  .week-toolbar { align-items: flex-start; flex-direction: column; gap: 12px; }
+  .history-controls { align-self: stretch; justify-content: center; }
+  .days-grid { grid-template-columns: minmax(0, 1fr); }
+}
 @media (max-width: 700px) {
   .sidebar {
     inset: auto 0 0;
@@ -253,7 +271,7 @@ h1 { margin: 0; font-family: "Playfair Display", serif; font-size: clamp(29px, 3
   .profile { margin: 0 0 0 4px; padding: 0; border: 0; }
   .profile-details { display: none !important; }
   .profile-avatar { flex-basis: 38px; width: 38px; height: 38px; }
-  .main-content { margin-left: 0; padding: 0 20px calc(92px + env(safe-area-inset-bottom)); }
+  .main-content { width: 100%; margin-left: 0; padding: 0 20px calc(92px + env(safe-area-inset-bottom)); }
   .topbar { height: 56px; }
   .topbar-right { display: none; }
   .page-heading { align-items: start; gap: 15px; margin: 28px 0 24px; }
@@ -263,6 +281,10 @@ h1 { margin: 0; font-family: "Playfair Display", serif; font-size: clamp(29px, 3
   .eyebrow { font-size: 8px; letter-spacing: 1.1px; line-height: 1.5; }
   .page-subtitle { margin-top: 8px; font-size: 12px; line-height: 1.5; }
   .week-toolbar { margin: 30px 0 14px; }
+  .week-toolbar { align-items: start; flex-direction: column; gap: 12px; }
+  .history-controls { width: 100%; align-self: stretch; grid-template-columns: 40px minmax(0, 220px) 40px; column-gap: 4px; justify-content: center; }
+  .week-date-stack { width: 220px; }
+  .week-date-button { width: 220px; padding: 0 5px; font-size: 10px; }
   .week-toolbar h2 { font-size: 20px; }
   .week-toolbar p { font-size: 11px; }
   .days-grid { grid-template-columns: 1fr; gap: 10px; }
@@ -291,5 +313,8 @@ h1 { margin: 0; font-family: "Playfair Display", serif; font-size: clamp(29px, 3
   .overview-stats { gap: 7px; }
   .week-controls { gap: 4px; }
   .week-controls .button { padding: 0 8px; }
+  .history-controls { grid-template-columns: 36px minmax(0, 200px) 36px; column-gap: 4px; }
+  .history-controls .icon-button { width: 36px; height: 36px; }
+  .week-date-stack, .week-date-button { width: 200px; }
   .category-tabs { margin-right: -16px; margin-left: -16px; padding-right: 16px; padding-left: 16px; }
 }
