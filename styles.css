@@ -187,8 +187,8 @@ h1 { margin: 0; font-family: "Playfair Display", serif; font-size: clamp(29px, 3
 .modal-heading .icon-button { width: 30px; height: 30px; font-size: 18px; }
 .field-label { display: block; margin: 15px 0 7px; color: #5c685b; font-size: 10px; font-weight: 700; }
 .optional { color: #a0a79e; font-weight: 400; }
-.text-input { width: 100%; min-height: 42px; padding: 10px 11px; border: 1px solid var(--border); border-radius: 7px; outline: none; background: var(--surface); color: var(--ink); font-size: 18px; }
-input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]), textarea, select { font-size: 18px; }
+.text-input { width: 100%; min-height: 42px; padding: 10px 11px; border: 1px solid var(--border); border-radius: 7px; outline: none; background: var(--surface); color: var(--ink); font-size: 16px; }
+input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]), textarea, select { font-size: 16px; }
 .text-input:focus { border-color: #91aa88; box-shadow: 0 0 0 3px #edf3ea; }
 .text-input::placeholder { color: #b0b6ae; }
 .text-area { min-height: 70px; resize: vertical; }
@@ -317,4 +317,153 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type=
   .history-controls .icon-button { width: 36px; height: 36px; }
   .week-date-stack, .week-date-button { width: 200px; }
   .category-tabs { margin-right: -16px; margin-left: -16px; padding-right: 16px; padding-left: 16px; }
+}
+
+/* Lokma: a warm, editorial kitchen notebook with a leafy green navigation rail. */
+:root {
+  --ink: #26382c; --muted: #69776a; --green: #456b4b; --green-dark: #34563a;
+  --green-soft: #e7eee3; --cream: #f4f1e8; --line: #e6e3d8; --surface: #fffdf7;
+  --surface-soft: #fbf8ef; --surface-muted: #f0eee5; --text-soft: #58675a;
+  --text-subtle: #7d887c; --border: #e4e1d6; --border-soft: #efede5; --orange: #bf7049;
+}
+:root[data-theme="dark"] {
+  --ink: #e8eee6; --muted: #a5b0a3; --green: #a9c69d; --green-dark: #bdd6b3;
+  --green-soft: #303d31; --cream: #202720; --line: #3a443a; --surface: #293229;
+  --surface-soft: #303a31; --surface-muted: #354137; --text-soft: #c0cbbd;
+  --text-subtle: #9eaa9c; --border: #3b463c; --border-soft: #343e35; --orange: #dfa078;
+}
+body { background: var(--cream); }
+.sidebar { background: #273b2e; border-color: #3a4a3c; color: #f2f0e5; }
+.sidebar .brand { color: #f2f0e5; }
+.sidebar .brand-mark { color: #273b2e; background: #b9cfaa; }
+.sidebar .brand-dot { color: #d99a6c; }
+.sidebar-label { color: #aab8a8; font-size: 13px; }
+.nav-link { color: #d1d9ce; font-size: 15px; }
+.nav-link.active { color: #273b2e; background: #c6d7b9; }
+.profile { border-color: #405143; }
+.profile strong { font-size: 14px; }
+.profile div span { color: #b5c0b2; font-size: 13px; }
+:root[data-theme="dark"] .sidebar { background: #18221b; border-color: #354337; }
+:root[data-theme="dark"] .sidebar .brand-mark { color: #18221b; }
+:root[data-theme="dark"] .nav-link.active { color: #1b281d; background: #b9d0ac; }
+.main-content { padding-right: clamp(24px, 5vw, 76px); padding-left: clamp(24px, 5vw, 76px); }
+.topbar { border-color: var(--border); }
+.breadcrumb, .today-chip { font-size: 14px; }
+.page-heading { margin-top: 52px; margin-bottom: 34px; }
+.page-heading h1 { font-size: clamp(34px, 3.4vw, 46px); letter-spacing: -1.5px; }
+.page-heading .eyebrow, .auth-card > .eyebrow { color: var(--orange); font-size: 13px; }
+.page-subtitle { font-size: 16px; }
+.button { min-height: 46px; padding-right: 19px; padding-left: 19px; border-radius: 11px; font-size: 15px; }
+.button-primary { background: #486e4e; }
+.button-primary:hover { background: #35593d; }
+.button-primary > span { font-size: 21px; }
+.week-toolbar { align-items: center; margin-top: 42px; margin-bottom: 19px; }
+.week-toolbar h2 { font-size: 23px; }
+.week-toolbar p, .overview-caption { font-size: 14px; }
+.history-controls { grid-template-columns: 46px 250px 46px; grid-template-rows: 20px 46px; column-gap: 11px; }
+.week-date-stack { width: 250px; grid-template-rows: 20px 42px; }
+.week-date-button { width: 250px; height: 42px; border-radius: 11px; font-size: 15px; }
+.current-week-shortcut { font-size: 14px; }
+.history-controls .icon-button { width: 46px; height: 46px; border-radius: 12px; font-size: 24px; }
+.days-grid { gap: 16px; }
+.day-card { min-height: 160px; padding: 21px 22px 17px; border-radius: 15px; box-shadow: 0 3px 12px #31412c08; }
+.day-card.today { border-color: #b6c8a9; background: linear-gradient(145deg, var(--surface) 45%, var(--green-soft)); box-shadow: inset 4px 0 #8da77a, 0 5px 16px #31412c0b; }
+.day-heading { padding-bottom: 14px; }
+.day-title strong { font-size: 18px; }
+.day-date, .meal-category, .meal-time, .recipe-category { font-size: 14px; }
+.today-label { padding: 4px 9px; background: #e4eddd; color: #496840; font-size: 12px; letter-spacing: .04em; }
+:root[data-theme="dark"] .today-label { background: #3a4c38; color: #cfdfc5; }
+.add-day-meal { width: 36px; height: 36px; border-radius: 10px; font-size: 22px; }
+.empty-day { padding-top: 18px; color: var(--text-subtle); font-size: 15px; }
+.meal-list { gap: 12px; padding-top: 15px; }
+.meal-item { grid-template-columns: 20px minmax(0, 1fr) auto 24px; gap: 11px; }
+.meal-name { font-size: 16px; }
+.meal-time { padding: 4px 8px; border-radius: 7px; background: var(--surface-muted); font-variant-numeric: tabular-nums; }
+.recipe-toolbar { margin-bottom: 24px; }
+.category-tabs { gap: 9px; }
+.category-tab { padding: 10px 16px; border-radius: 999px; font-size: 15px; }
+.category-tab.active { background: var(--green); color: white; border-color: var(--green); }
+:root[data-theme="dark"] .category-tab.active { color: #203020; background: #a9c69d; border-color: #a9c69d; }
+.recipe-grid { gap: 18px; }
+.recipe-card { min-height: 205px; padding: 21px; border-radius: 15px; border-top: 3px solid #a8bb98; box-shadow: 0 4px 16px #31412c0a; }
+.recipe-category { color: var(--orange); font-weight: 700; letter-spacing: .04em; }
+.recipe-card h3 { margin-top: 19px; font-size: 19px; line-height: 1.35; }
+.recipe-card p { color: var(--muted); font-size: 14px; }
+.recipe-card-bottom button { font-size: 14px; }
+.empty-recipes { font-size: 15px; }
+.field-label { margin-top: 18px; font-size: 15px; }
+.text-input { min-height: 46px; border-radius: 10px; font-size: 16px; }
+.text-area { min-height: 110px; }
+.modal-heading h2 { font-size: 28px; }
+.detail-section h3 { font-size: 17px; }
+.detail-section p, .detail-section li { font-size: 15px; }
+.auth-card { border-radius: 20px; padding: 36px; }
+.auth-description, .auth-footnote { font-size: 14px; }
+.auth-mode { min-height: 42px; font-size: 14px; }
+@media (max-width: 700px) {
+  .main-content { padding-right: 18px; padding-left: 18px; }
+  .page-heading { margin-top: 31px; margin-bottom: 27px; }
+  .page-heading h1 { font-size: clamp(32px, 9vw, 40px); }
+  .page-subtitle { font-size: 15px; }
+  .page-heading .button { min-height: 44px; font-size: 15px; }
+  .week-toolbar { margin-top: 32px; gap: 13px; }
+  .week-toolbar h2 { font-size: 21px; }
+  .history-controls { grid-template-columns: 42px minmax(0, 230px) 42px; grid-template-rows: 20px 44px; column-gap: 5px; }
+  .week-date-stack, .week-date-button { width: 230px; }
+  .week-date-stack { grid-template-rows: 20px 42px; }
+  .week-date-button { height: 42px; font-size: 14px; }
+  .history-controls .icon-button { width: 42px; height: 44px; }
+  .days-grid { gap: 12px; }
+  .day-card { min-height: 145px; padding: 17px; border-radius: 13px; }
+  .day-title strong { font-size: 17px; }
+  .meal-name { font-size: 15px; }
+  .meal-category, .meal-time, .day-date { font-size: 13px; }
+  .recipe-card h3 { font-size: 19px; }
+  .recipe-card p { font-size: 14px; }
+  .category-tab { font-size: 14px; }
+}
+@media (max-width: 390px) {
+  .main-content { padding-right: 15px; padding-left: 15px; }
+  .history-controls { grid-template-columns: 38px minmax(0, 210px) 38px; column-gap: 3px; }
+  .week-date-stack, .week-date-button { width: 210px; }
+  .history-controls .icon-button { width: 38px; }
+  .week-date-button { font-size: 13px; }
+  .nav-link { font-size: 13px !important; }
+}
+
+/* Compact type scale across the interface; editable fields remain 16px for iOS. */
+.page-heading h1 { font-size: clamp(27px, 2.8vw, 34px); }
+.page-heading .eyebrow, .auth-card > .eyebrow { font-size: 10px; }
+.page-subtitle, .button, .nav-link { font-size: 13px; }
+.sidebar-label { font-size: 10px; }
+.profile strong { font-size: 12px; }
+.profile div span, .breadcrumb, .today-chip, .week-toolbar p,
+.overview-caption, .day-date, .meal-category, .meal-time,
+.recipe-category, .recipe-card p, .recipe-card-bottom button,
+.empty-day, .empty-recipes, .auth-description, .auth-footnote { font-size: 12px; }
+.week-toolbar h2 { font-size: 17px; }
+.week-date-button { font-size: 12px; }
+.current-week-shortcut { font-size: 11px; }
+.day-title strong { font-size: 14px; }
+.today-label { font-size: 9px; }
+.meal-name { font-size: 13px; }
+.category-tab { font-size: 12px; }
+.recipe-card h3 { font-size: 15px; }
+.field-label { font-size: 13px; }
+.modal-heading h2 { font-size: 22px; }
+.detail-section h3 { font-size: 14px; }
+.detail-section p, .detail-section li { font-size: 13px; }
+.auth-mode { font-size: 12px; }
+@media (max-width: 700px) {
+  .page-heading h1 { font-size: clamp(26px, 7vw, 32px); }
+  .page-subtitle, .page-heading .button { font-size: 13px; }
+  .week-toolbar h2 { font-size: 16px; }
+  .week-date-button { font-size: 11px; }
+  .day-title strong { font-size: 14px; }
+  .meal-name, .category-tab { font-size: 12px; }
+  .recipe-card h3 { font-size: 15px; }
+}
+@media (max-width: 390px) {
+  .nav-link { font-size: 11px !important; }
+  .week-date-button { font-size: 11px; }
 }
