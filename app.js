@@ -555,6 +555,15 @@ function setAuthMessage(message, type = "error") {
   authMessage.classList.toggle("error", type === "error");
 }
 
+function setUserIdentity(email) {
+  const displayEmail = email || "Hesabım";
+  const initial = email?.trim().charAt(0).toLocaleUpperCase("tr-TR") || "G";
+  document.querySelector("#profile-email").textContent = displayEmail;
+  document.querySelector("#account-email").textContent = displayEmail;
+  document.querySelector("#open-account").textContent = initial;
+  document.querySelector(".account-identity .avatar").textContent = initial;
+}
+
 function setAuthMode(mode) {
   authMode = mode;
   const isSignUp = mode === "signup";
@@ -605,8 +614,7 @@ async function activateSession(session) {
     if (!accountStatus) throw new Error("Hesap durumu tablosu bulunamadı. Yeni schema.sql dosyasını Supabase SQL Editor'de çalıştır.");
     accountStatusVerified = true;
     if (generation !== authGeneration) return;
-    document.querySelector("#profile-email").textContent = session.user.email || "Hesabım";
-    document.querySelector("#account-email").textContent = session.user.email || "Hesabım";
+    setUserIdentity(session.user.email);
     updateAccountStatusUI(accountStatus.is_active);
     if (!accountStatus.is_active) {
       activeUserId = userId;
@@ -664,8 +672,7 @@ async function activateSession(session) {
         activeUserId = userId;
         ensureCurrentWeekRecord();
         localStorage.setItem(cacheKey(userId), JSON.stringify(state));
-        document.querySelector("#profile-email").textContent = session.user.email || "Hesabım";
-        document.querySelector("#account-email").textContent = session.user.email || "Hesabım";
+        setUserIdentity(session.user.email);
         renderAll();
         setAccountScreen("app");
         showToast("Çevrimdışı önbellek açıldı; bulut bağlantısı kurulunca yeniden eşitlenecek.");
