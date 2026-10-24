@@ -14,11 +14,15 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   </head>
   <body>
-    <main class="auth-screen" id="auth-screen">
+    <main class="auth-screen loading" id="auth-screen">
       <a class="brand auth-brand" href="#" aria-label="Lokma ana sayfa">
         <span class="brand-mark">l</span>
         <span>lokma<span class="brand-dot">.</span></span>
       </a>
+      <div class="auth-loading" role="status" aria-live="polite">
+        <span class="auth-loading-spinner" aria-hidden="true"></span>
+        <span>Yükleniyor…</span>
+      </div>
       <form id="auth-form" class="auth-card">
         <p class="eyebrow">MUTFAĞIN SENİNLE HER YERDE</p>
         <h1 id="auth-title">Hoş geldin<span class="heading-period">.</span></h1>

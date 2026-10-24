@@ -58,7 +58,12 @@ button { color: inherit; cursor: pointer; }
 .auth-message.success { color: var(--green); }
 .auth-message:empty { min-height: 0; margin: 0; }
 .auth-footnote { margin: 18px 0 0; color: var(--text-subtle); font-size: 10px; text-align: center; }
-.auth-screen.loading .auth-card { opacity: .7; pointer-events: none; }
+.auth-screen.loading .auth-card { display: none; }
+.auth-loading { display: flex; align-items: center; justify-content: center; gap: 10px; color: var(--muted); font-size: 14px; }
+.auth-screen:not(.loading) .auth-loading { display: none; }
+.auth-loading-spinner { width: 17px; height: 17px; border: 2px solid var(--border); border-top-color: var(--green); border-radius: 50%; animation: auth-loading-spin .75s linear infinite; }
+@keyframes auth-loading-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .auth-loading-spinner { animation-duration: 1.8s; } }
 .sidebar { width: 242px; background: var(--surface); border-right: 1px solid var(--border); position: fixed; inset: 0 auto 0 0; display: flex; flex-direction: column; padding: 29px 19px 18px; z-index: 2; }
 .brand { display: flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; font-family: "Playfair Display", serif; font-weight: 700; font-size: 26px; letter-spacing: -.8px; padding: 0 10px; }
 .brand-mark { display: grid; place-items: center; width: 31px; height: 31px; color: white; background: var(--green); border-radius: 10px 10px 10px 3px; font-family: "Playfair Display", serif; font-size: 21px; }

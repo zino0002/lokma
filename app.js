@@ -847,6 +847,7 @@ themeToggle.addEventListener("click", () => {
 
 document.querySelector("#profile-email").textContent = "Ev aşçısı";
 if (!window.supabase?.createClient) {
+  authScreen.classList.remove("loading");
   setAuthMessage("Supabase bağlantı kitaplığı yüklenemedi. İnternet bağlantını kontrol edip sayfayı yenile.");
 } else {
   supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
@@ -868,12 +869,16 @@ if (!window.supabase?.createClient) {
   });
   supabaseClient.auth.getSession().then(({ data, error }) => {
     if (error) {
+      authScreen.classList.remove("loading");
       setAuthMessage(`Oturum bilgisi alınamadı: ${error.message}`);
     } else if (data.session) {
       void activateSession(data.session);
+    } else {
+      authScreen.classList.remove("loading");
     }
   }).catch((error) => {
     console.error("Supabase oturumu denetlenemedi.", error);
+    authScreen.classList.remove("loading");
     setAuthMessage("Supabase oturumu kontrol edilemedi. İnternet bağlantını kontrol edip tekrar dene.");
   });
 }
